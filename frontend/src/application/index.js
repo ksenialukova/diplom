@@ -155,7 +155,7 @@ class Application extends Component {
           </div>
             <div style={{ width: "75vw", height: "75vh" }}>
                 <GoogleMapReact
-                    bootstrapURLKeys={{ key: 'AIzaSyAjJiOQYpv9x7CWjzfcHFkRPmMJBTy_3C0'}}
+                    bootstrapURLKeys={{ key: ''}}
                     defaultCenter={this.state.center}
                     defaultZoom={this.state.zoom}
                     onGoogleApiLoaded={({map, maps}) => setup(map, maps, this.state)}
