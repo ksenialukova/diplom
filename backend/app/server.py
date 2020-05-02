@@ -1,12 +1,18 @@
-from flask import Flask
-from flask import jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
+from sqlalchemy import create_engine
+import pandas as pd
 
 from backend.app.computing import return_plan
+from db.dbi import DiplomDB, get_db_connection_str
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+engine = create_engine(get_db_connection_str())
+
+db = DiplomDB(engine)
 
 
 @app.route('/')
@@ -18,6 +24,7 @@ def index():
 # получаем дату и возвращаем текущие интенсивности
 @app.route('/intensity')
 def return_intensity():
+    current_date = request.args.get('date')
     return jsonify({
         'cash_entities': [
             {
@@ -39,6 +46,8 @@ def return_intensity():
 # получаем дату и выводим план на этот день, иначе пустой массив
 @app.route('/plan_by_date')
 def return_plan_by_date():
+    current_date = request.args.get('date')
+    print(current_date)
     return jsonify({
         'plan': return_plan()
     })
@@ -47,34 +56,18 @@ def return_plan_by_date():
 # вывод списка с бд
 @app.route('/shipments')
 def get_shipments():
+    df = db.return_shipments()
+    shipments = []
+
+    for index, row in df.iterrows():
+        shipments.append({
+            'date': row['date'].strftime("%Y-%m-%d"),
+            'length': row['length'],
+            'cost': row['cost']
+        })
+
     return jsonify({
-        'shipments': [
-            {
-                'date': '2020-04-23',
-                'length': '250',
-                'cost': '1000'
-            },
-            {
-                'date': '2020-04-01',
-                'length': '350',
-                'cost': '1000'
-            },
-            {
-                'date': '2020-03-23',
-                'length': '450',
-                'cost': '1000'
-            },
-            {
-                'date': '2020-03-01',
-                'length': '250',
-                'cost': '900'
-            },
-            {
-                'date': '2020-02-23',
-                'length': '450',
-                'cost': '1000'
-            }
-        ]
+        'shipments': shipments
     })
 
 
