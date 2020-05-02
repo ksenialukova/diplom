@@ -8,9 +8,9 @@ import 'react-datepicker/dist/react-datepicker.css'
 
 const marker = (map, maps, entity) => {
     const marker = new maps.Marker({
-        position: { lat: entity.lat, lng: entity.lng },
+        position: { lat: parseFloat(entity.lat), lng: parseFloat(entity.lng) },
         map: map,
-        // label: 'A'
+        label: entity.type
     })
     const CashEntityCard = new maps.InfoWindow({
         content:
@@ -83,16 +83,19 @@ const setup = (map, maps, state) => {
 }
 
 class Application extends Component {
-    state = {
-        date: new Date(),
-        center: {
-            lat: 50.4250244,
-            lng: 30.4503335
-        },
-        zoom: 11,
-        cash_entities: [],
-        shipments: [],
-        plan: []
+    constructor(props) {
+        super(props)
+        this.state = {
+            date: new Date(2020, 2, 18),
+            center: {
+                lat: 50.4250244,
+                lng: 30.4503335
+            },
+            zoom: 11,
+            cash_entities: [],
+            shipments: [],
+            plan: []
+        }
     }
 
     fetchAtms = async () => {
@@ -100,6 +103,9 @@ class Application extends Component {
             {
                 method: 'GET',
                 mode: 'no-cors',
+                params: {
+                    date: this.state.date
+                },
                 headers: {
                     "Access-Control-Allow-Origin": "*",
                     'Content-type': 'application/json'
@@ -128,6 +134,9 @@ class Application extends Component {
             {
                 method: 'GET',
                 mode: 'no-cors',
+                params: {
+                    date: this.state.date
+                },
                 headers: {
                     "Access-Control-Allow-Origin": "*",
                     'Content-type': 'application/json'
@@ -139,10 +148,16 @@ class Application extends Component {
     }
 
     componentDidMount() {
-        // this.fetchAtms()
+        this.fetchAtms()
         this.fetchShipments()
         this.fetchPlan()
     }
+
+    update() {
+        this.fetchAtms()
+        this.fetchPlan()
+    }
+
 
     render() {
     return (
@@ -151,6 +166,7 @@ class Application extends Component {
             <DatePicker
                 selected={this.state.date}
                 dateFormat="yyyy-MM-dd"
+                onChange={(newValue) => this.setState({date: newValue}, () => this.update())}
             />
           </div>
             <div style={{ width: "75vw", height: "75vh" }}>

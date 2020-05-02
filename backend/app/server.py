@@ -24,30 +24,28 @@ def index():
 # получаем дату и возвращаем текущие интенсивности
 @app.route('/intensity')
 def return_intensity():
-    current_date = request.args.get('date')
+    date = request.args.get('date')
+    current_date = pd.to_datetime(date).strftime("%Y-%m-%d")
+    df = db.return_intensities_and_coords_by_date(current_date)
+    cash_entities = []
+
+    for index, row in df.iterrows():
+        cash_entities.append({
+            'type': row['ce_type'],
+            'lat': row['x_coord'],
+            'lng': row['y_coord'],
+            'intensity': row['percent']
+        })
+
     return jsonify({
-        'cash_entities': [
-            {
-                'type': 'atm',
-                'lat': 50.4246741,
-                'lng': 30.4601089,
-                'intensity': 0.5
-            },
-            {
-                'type': 'atm',
-                'lat': 50.4338805,
-                'lng': 30.4532582,
-                'intensity': 0.75
-            }
-        ]
+        'cash_entities': cash_entities
     })
 
 
 # получаем дату и выводим план на этот день, иначе пустой массив
 @app.route('/plan_by_date')
 def return_plan_by_date():
-    current_date = request.args.get('date')
-    print(current_date)
+    date = request.args.get('date')
     return jsonify({
         'plan': return_plan()
     })

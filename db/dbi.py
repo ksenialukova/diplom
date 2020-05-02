@@ -91,6 +91,18 @@ class DiplomDB:
 
         return df
 
+    def return_intensities_and_coords_by_date(self, current_date):
+        sql = f'''
+        select ce_type, x_coord, y_coord, percent
+        from cash_entity
+        join balance b on cash_entity.ce_code = b.code 
+        where date= '{ current_date }'
+        '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
 
 engine = create_engine(get_db_connection_str())
 
