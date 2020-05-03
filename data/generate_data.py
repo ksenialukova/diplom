@@ -2,14 +2,16 @@ import datetime
 import csv
 import random
 
-start_date = '2020-03-01'
-end_date = '2020-03-31'
+from db.dbi import db
 
-entity_number = 8
-entities = [f'{i+2}' for i in range(entity_number)]
+start_date = '2020-01-01'
+end_date = '2020-04-30'
 
-entities_percents = [0.0 for _ in range(entity_number)]
-entities_intensities = [float(f'{random.random()/2:.3f}') for _ in range(entity_number)]
+entities_df = db.get_atms()['ce_code']
+entities = [i for i in entities_df]
+
+entities_percents = [0.0 for _ in entities_df]
+entities_intensities = [float(f'{random.random()/10:.3f}') for _ in entities_df]
 
 print(entities_intensities)
 
@@ -25,9 +27,10 @@ for date in date_range:
     with open(f'balances/balances.{date}.csv', 'w') as file:
         writer = csv.writer(file, delimiter=',')
         writer.writerow(['DATE', 'CODE', 'PERCENT'])
-        for i in range(entity_number):
+        for i in range(len(entities_df)):
+            min_range = entities_intensities[i]-random.random()/10
             current_intensity = random.uniform(
-                entities_intensities[i]-random.random()/10,
+                min_range if min_range > 0 else 0,
                 entities_intensities[i]+random.random()/10
             )
             temp = entities_percents[i]+current_intensity
