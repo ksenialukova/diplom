@@ -10,11 +10,11 @@ def get_db_connection_string(creds):
 
 def get_db_credentials():
     return {
-        "host": '',
-        "port": '',
-        "database": '',
-        "user": '',
-        "password": ''
+        "host": 'localhost',
+        "port": '5433',
+        "database": 'postgres',
+        "user": 'postgres',
+        "password": 'postgres'
     }
 
 
@@ -68,7 +68,7 @@ class DiplomDB:
             pd.concat([
                 pd.read_csv(f, dtype={'PERCENT': np.str})
                 for f in path.glob("*")
-            ]).sort_values(by=['DATE'])
+            ]).sort_values(by=['DATE', 'CODE'])
         )
 
         with self.connectable.connect() as conn:
@@ -102,6 +102,105 @@ class DiplomDB:
         df = pd.read_sql(sql, self.connectable)
 
         return df
+
+    def fill_cost(self):
+        df = pd.read_csv('../data/distances/distances.csv')
+        with self.connectable.connect() as conn:
+            for index, row in df.iterrows():
+                sql = (
+                    f'''
+                            INSERT INTO cost (
+                            FROM_CODE,
+                            TO_CODE,
+                            DISTANCE,
+                            DURATION
+                            ) VALUES (
+                                {row['FROM_CODE']},
+                                {row['TO_CODE']},
+                                {row['DISTANCE']},
+                                {row['DURATION']}
+                                )'''
+                )
+                conn.execute(sql)
+
+    def get_min_max_date(self):
+        sql = f'''
+                select min(date), max(date)
+                from balance
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_atms(self):
+        sql = f'''
+                select ce_code
+                from cash_entity
+                where ce_type='A'
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_entities(self, depo):
+        sql = f'''
+                select *
+                from cash_entity
+                where parent_code = {depo}
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_balances(self):
+        sql = f'''
+                select *
+                from balance
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def add_forecast_shipment(self,
+                              ce_code,
+                              last_shipment,
+                              next_shipment,
+                              days_for_filling
+                              ):
+        with self.connectable.connect() as conn:
+            sql = (
+                f'''
+                INSERT INTO forecast_entity_shipment (
+                CE_CODE,
+                LAST_DATE,
+                FIRST_NEXT_DATE,
+                DAYS_FOR_FILLING
+                ) VALUES (
+                {ce_code},
+                '{last_shipment}',
+                '{next_shipment}',
+                ARRAY {days_for_filling}
+                 )'''
+                )
+            conn.execute(sql)
+
+    def get_costs(self):
+        sql = f'''
+            select *
+            from cost
+            '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def add_plans(self):
+        # положить планы в бд
+        pass
 
 
 engine = create_engine(get_db_connection_str())
