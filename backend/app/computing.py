@@ -1,46 +1,46 @@
 import pandas as pd
 from backend.app.salesmanpar import best_way
 from backend.app.read_data import return_entities
+from db.dbi import db
 
 
 def return_entities_for_next_shipment():
-    return 2, 3, 4, 5, 6, 7, 8, 9
+    return 2, 3, 4
 
 
 def return_plan():
-    df_entities = return_entities()
+    depo = 1
+    df_entities = db.get_entities(depo=1)
+    df_costs = db.get_costs()
     needed_entities = list(return_entities_for_next_shipment())
-
-    table = (
-        df_entities
-        [lambda x: (x['CODE'].isin(needed_entities))]
-    )
 
     X = list(
         df_entities
-        [lambda x: (x['CODE'].isin(needed_entities))]['X_COORD']
+        [lambda x: (x['ce_code'].isin(needed_entities))]['ce_code']
     )
 
-    Y = list(
-        df_entities
-        [lambda x: (x['CODE'].isin(needed_entities))]['Y_COORD']
-    )
+    X.append(depo)
 
-    print(table)
+    M = {}
+    for i in X:
+        temp = {}
+        for j in X:
+            if i == j:
+                temp[j] = float('inf')
+            else:
+                temp[j] = int(df_costs[
+                                  (df_costs['from_code'] == i)
+                                  &
+                                  (df_costs['to_code'] == j)
+                                  ]['distance']
+                              )
+        M[i] = temp
 
-    plan = []
-
-    S, ib, result_way = best_way(len(X), X, Y)
+    S, ib, result_way = best_way(M, X, depo)
     print(result_way)
 
-    for i in result_way:
-        plan.append({
-            'lat': table.loc[i+2, 'X_COORD'],
-            'lng': table.loc[i+2, 'Y_COORD']
-        })
-
-    print(plan)
-    return plan
+    # print(plan)
+    # return plan
 
 
 return_plan()

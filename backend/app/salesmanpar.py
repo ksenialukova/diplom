@@ -1,6 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor, wait
-import numpy as np
-from numpy import sqrt
+import copy
 
 RS = []
 RW = []
@@ -8,38 +7,39 @@ RIB = []
 s = []
 
 
-def find_way(ib, n, X, Y, M):
-    way = list()
-    way.append(ib)
-    for i in np.arange(1, n, 1):
-        s = []
-        for j in np.arange(0, n, 1):
-            s.append(M[way[i - 1], j])
-        way.append(s.index(min(s)))
-        for j in np.arange(0, i, 1):
-            M[way[i], way[j]] = float('inf')
-            M[way[i], way[j]] = float('inf')
-    S = sum([sqrt(
-        (X[way[i]] - X[way[i + 1]]) ** 2 + (Y[way[i]] - Y[way[i + 1]]) ** 2)
-        for i in np.arange(0, n - 1, 1)]) + sqrt(
-        (X[way[n - 1]] - X[way[0]]) ** 2 + (Y[way[n - 1]] - Y[way[0]]) ** 2)
+def find_way(ib, X, M, depo):
+    costs = copy.deepcopy(M)
+    way = [depo, ib]
+    S = 0
+
+    for i in X:
+        M[i][depo] = float('inf')
+        M[i][ib] = float('inf')
+
+    i = way[-1]
+
+    for _ in range(len(X)-1):
+        i = way[-1]
+        min_index = min(M[i], key=M[i].get)
+        way.append(min_index)
+
+        for j in range(len(X)):
+            M[X[j]][min_index] = float('inf')
+
+    way.append(depo)
+
+    for i in range(len(way)-1):
+        S += costs[way[i]][way[i+1]]
 
     return S, way, ib
 
 
-def best_way(n, X, Y):
-    M = np.zeros([n, n])
-    for i in np.arange(0, n, 1):
-        for j in np.arange(0, n, 1):
-            if i != j:
-                M[i, j] = sqrt((X[i] - X[j]) ** 2 + (Y[i] - Y[j]) ** 2)
-            else:
-                M[i, j] = float('inf')
+def best_way(M, X, depo):
 
     with ProcessPoolExecutor(6) as executor:
         tasks = [
-            executor.submit(find_way, ib=ib, n=n, X=X, Y=Y, M=M)
-            for ib in np.arange(0, n, 1)
+            executor.submit(find_way, ib=ib, X=X, M=M, depo=depo)
+            for ib in X
         ]
         # we must wait until the whole layer processing finished:
         wait(tasks)
