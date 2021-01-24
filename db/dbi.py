@@ -24,13 +24,7 @@ def get_db_connection_str():
 
 
 class DiplomDB:
-    def __init__(
-            self,
-            connectable
-    ):
-        """
-        Use SQLAlchemy Connectable to perform ACE queries.
-        """
+    def __init__(self, connectable):
         self.connectable = connectable
 
     def fill_cash_entities(self):
