@@ -72,15 +72,16 @@ def best_way(M, X, depo):
 
     return S, ib, result_way
 
-# x = [10, 60, 100, 100, 30, 20, 20, 50, 50, 85]
-# y = [5, 40, 0, 90, 50, 55, 50, 75, 25, 50]
-# n = len(x)
 
-n = 20
+x = [10, 60, 100, 100, 30, 20, 20, 50, 50, 85, 15, 45, 67, 86, 98, 54, 32, 13, 90]
+y = [5, 40, 0, 90, 50, 55, 50, 75, 25, 50, 54, 23, 56, 76, 12, 39, 41, 87, 50, 40]
+n = len(x)
+
+# n = 20
 m = 100
 a = 0
-x = np.random.uniform(a, m, n)
-y = np.random.uniform(a, m, n)
+# x = np.random.uniform(a, m, n)
+# y = np.random.uniform(a, m, n)
 
 
 M = {}
@@ -102,10 +103,13 @@ totalNumberBees = 100
 numberInactive = 20
 numberActive = 50
 numberScout = 30
-maxNumberVisits = 1000
+maxNumberVisits = 2000
 maxNumberCycles = 100000
 
+population = []
+
 start = time.monotonic()
+
 
 def GenerateWay(X, depo):
     result = [depo]
@@ -143,6 +147,7 @@ class Hive:
         self.indexesOfInactiveBees = []
         self.bestMeasureOfQuality = MeasureOfQuality(self.bestMemoryMatrix)
         self.bees = []
+        self.p = 0
 
         for i in range(self.totalNumberBees):
             if i < self.numberInactive:
@@ -154,7 +159,14 @@ class Hive:
                 currStatus = 1  # active
 
             randomMemoryMatrix = GenerateWay(X, depo)
+            self.p += 1
+            while randomMemoryMatrix in population:
+                self.p += 1
+                randomMemoryMatrix = GenerateWay(X, depo)
+            population.append(randomMemoryMatrix)
+            # print(randomMemoryMatrix)
             mq = MeasureOfQuality(randomMemoryMatrix)
+            # print(mq)
             numberOfVisits = 0
             self.bees.append(Bee(currStatus, randomMemoryMatrix, mq, numberOfVisits))
 
@@ -178,21 +190,38 @@ class Bee:
 
 hive = Hive(totalNumberBees, numberInactive, numberActive, numberScout, maxNumberVisits, maxNumberCycles)
 
+print(hive.bestMeasureOfQuality)
+
 
 def GenerateNeighborWay(way):
-    first_index = random.randrange(0, len(way))
-    if first_index == len(way) - 1:
-        second_index = 0
-    else:
-        second_index = first_index + 1
+    for i in range(3):
+        maximum = 0
+        point = 0
+        for i in range(len(way)-1):
+            if M[way[i]][way[i+1]] > maximum:
+                maximum = M[way[i]][way[i+1]]
+                point = i
 
-    way[first_index], way[second_index] = way[second_index], way[first_index]
+        first_index = point
+        second_index = random.randrange(0, len(way))
+        way[first_index], way[second_index] = way[second_index], way[first_index]
+
+    """for i in range(2):
+        first_index = random.randrange(0, len(way))
+        if first_index == len(way) - 1:
+            second_index = 0
+        else:
+            second_index = first_index + 1
+
+        way[first_index], way[second_index] = way[second_index], way[first_index]"""
     return way
 
 
 def solve(hive):
     cycle = 0
-    while cycle < hive.maxNumberCycles:
+    prev_best = hive.bestMeasureOfQuality
+    while cycle < 1000:
+        quatilies.append(hive.bestMeasureOfQuality)
         for i in range(hive.totalNumberBees):
             if hive.bees[i].status == 1:
                 ProcessActiveBee(i)
@@ -200,7 +229,11 @@ def solve(hive):
                 ProcessScoutBee(i)
             elif hive.bees[i].status == 0:
                 ProcessInactiveBee(i)
-        cycle += 1
+        if prev_best > hive.bestMeasureOfQuality:
+            prev_best = hive.bestMeasureOfQuality
+            cycle = 0
+        else:
+            cycle += 1
 
 
 def ProcessActiveBee(i):
@@ -210,6 +243,7 @@ def ProcessActiveBee(i):
     neighbourQuality = MeasureOfQuality(neighbour)
 
     prob = random.random()
+    # print(prob)
     memoryWasUpdated = False
     numberOfVisitsOverLimit = False
 
@@ -275,7 +309,7 @@ def DoWaggleDance(i):
 
 
 solve(hive)
-print(hive.bestMeasureOfQuality, len(hive.bestMemoryMatrix))
+print(hive.bestMeasureOfQuality, hive.bestMemoryMatrix)
 
 end = time.monotonic()
 # print(end - start)
@@ -298,13 +332,16 @@ plt.show()"""
 # quatilies = [25291.45546417859, 25087.048398994666, 25087.048398994666, 25087.048398994666, 25087.048398994666, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24843.72903061716, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673, 24627.097324512673]
 
 
-"""plt.xlabel('Ітерація')
+plt.xlabel('Ітерація')
 plt.ylabel('Значення')
 plt.plot([i for i in range(len(quatilies))], quatilies, color='r', linewidth=1)
 plt.grid(True)
-plt.show()"""
+plt.show()
 
+print(hive.p)
 
 # bees = [4453.573089907798, ]
 
-print('neighbours', best_way(M, X, depo)[0], len(best_way(M, X, depo)[2]))
+res = best_way(M, X, depo)
+
+print('neighbours', res[0], res[2])

@@ -5,13 +5,13 @@ import random
 from db.dbi import db
 
 start_date = '2020-01-01'
-end_date = '2020-04-30'
+end_date = '2020-06-16'
 
 entities_df = db.get_atms()['ce_code']
 entities = [i for i in entities_df]
 
 entities_percents = [0.0 for _ in entities_df]
-entities_intensities = [float(f'{random.random()/10:.3f}') for _ in entities_df]
+entities_intensities = [float(f'{random.random():.3f}') for _ in entities_df]
 
 print(entities_intensities)
 

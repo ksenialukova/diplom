@@ -1,11 +1,12 @@
 import React from 'react'
+import { BrowserRouter } from 'react-router-dom';
 import './App.css';
 import Application from './application'
 
 const App = () => (
-    <div>
+    <BrowserRouter basename='localhost'>
         <Application/>
-    </div>
+    </BrowserRouter>
 )
 
 export default App;

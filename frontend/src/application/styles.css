@@ -1,0 +1,57 @@
+.dropzone {
+    width: 50vw;
+    height: 20vh;
+    margin-left: 25vw;
+    margin-top: 15vh;
+    text-align: center;
+    padding: 20px;
+    border: 3px dashed #eeeeee;
+    background-color: #fafafa;
+    color: #bdbdbd;
+}
+
+
+#app {
+    font-family: 'Open Sans', sans-serif;
+}
+
+   .table {
+      margin: 1em;
+      display: flex;
+      flex-direction: column;
+  }
+  .header, .row {
+      display: flex;
+  }
+
+.table.header.div {
+    flex: 1;
+    padding: 0.2rem 0.4em;
+    border: 1px solid rgb(238, 238, 238);
+}
+.row.div {
+    flex: 1;
+    padding: 0.2rem 0.4em;
+    border: 1px solid rgb(238, 238, 238);
+}
+
+
+      .remove {
+        border: 0;
+        background-color: white;
+        text-align: right;
+        font-weight: 700;
+        flex: 0 0 20px;
+      }
+        .remove.a {
+          text-decoration: none;
+          color: black;
+        }
+
+    .header {
+        background-color: rgb(238, 238, 238);
+    }
+      .header.div {
+        cursor: pointer;
+      }
+

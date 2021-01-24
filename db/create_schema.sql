@@ -10,13 +10,17 @@ CREATE TABLE cash_entity
 
 COMMENT ON TABLE cash_entity IS 'Cash Entity';
 
+create extension "uuid-ossp";
+
 CREATE TABLE shipments
 (
-    id INTEGER NOT NULL PRIMARY KEY,
+    id uuid DEFAULT uuid_generate_v4(),
     date date NOT NULL,
     point INTEGER[],
     length DECIMAL NOT NULL,
-    cost DECIMAL NOT NULL
+    cost DECIMAL NOT NULL,
+    type TEXT NOT NULL,
+    PRIMARY KEY (id, date, type)
 );
 
 COMMENT ON TABLE shipments IS 'Shipments';
@@ -51,10 +55,7 @@ CREATE TABLE forecast_balance
 CREATE TABLE forecast_entity_shipment
 (
     ce_code INTEGER NOT NULL PRIMARY KEY,
-    last_date date NOT NULL,
-    first_next_date date NOT NULL,
-    second_next_date date,
-    days_for_filling INTEGER[]
+    next_date date NOT NULL
 );
 
 
@@ -62,3 +63,5 @@ DROP TABLE cash_entity CASCADE;
 DROP TABLE shipments;
 DROP TABLE balance;
 DROP TABLE forecast_entity_shipment;
+DROP TABLE forecast_balance;
+

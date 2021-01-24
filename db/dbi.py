@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -84,6 +84,19 @@ class DiplomDB:
                 )
                 conn.execute(sql)
 
+    def fill_balance(self, date, code, percent):
+        with self.connectable.connect() as conn:
+            sql = (
+                f'''
+                INSERT INTO forecast_balance (date, code, percent)
+                VALUES (
+                '{date}',
+                '{code}',
+                {percent}
+                )'''
+            )
+            conn.execute(sql)
+
     def return_shipments(self):
         sql = f'select * from shipments'
 
@@ -98,6 +111,29 @@ class DiplomDB:
         join balance b on cash_entity.ce_code = b.code 
         where date= '{ current_date }'
         '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def return_forecast_intensities_and_coords_by_date(self, current_date):
+        sql = f'''
+                select ce_type, x_coord, y_coord, percent
+                from cash_entity
+                join forecast_balance b on cash_entity.ce_code = b.code 
+                where date= '{current_date}'
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def return_branch(self):
+        sql = f'''
+                select ce_type, x_coord, y_coord
+                from cash_entity
+                where ce_code=1
+                '''
 
         df = pd.read_sql(sql, self.connectable)
 
@@ -165,27 +201,32 @@ class DiplomDB:
 
         return df
 
+    def get_balances_by_date(self, date):
+        sql = f'''
+                        select *
+                        from balance
+                        where date='{date}'
+                        '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
     def add_forecast_shipment(self,
                               ce_code,
-                              last_shipment,
                               next_shipment,
-                              days_for_filling
                               ):
         with self.connectable.connect() as conn:
             sql = (
                 f'''
                 INSERT INTO forecast_entity_shipment (
                 CE_CODE,
-                LAST_DATE,
-                FIRST_NEXT_DATE,
-                DAYS_FOR_FILLING
+                NEXT_DATE
                 ) VALUES (
                 {ce_code},
-                '{last_shipment}',
-                '{next_shipment}',
-                ARRAY {days_for_filling}
+                '{next_shipment}'
                  )'''
-                )
+            )
             conn.execute(sql)
 
     def get_costs(self):
@@ -198,11 +239,131 @@ class DiplomDB:
 
         return df
 
-    def add_plans(self):
-        # положить планы в бд
-        pass
+    def add_plan(self, date, way, length, cost, type):
+        with self.connectable.connect() as conn:
+            sql = (
+                f'''
+                INSERT INTO shipments (
+                ID,
+                DATE,
+                POINT,
+                LENGTH,
+                COST,
+                TYPE
+                ) VALUES (
+                uuid_generate_v4(),
+                '{date}',
+                ARRAY {way},
+                {length},
+                {cost},
+                '{type}'
+                 )'''
+            )
+            conn.execute(sql)
+
+    def get_all_next_shipment_dates(self):
+        sql = f'''
+        select distinct first_next_date
+        from forecast_entity_shipment
+        '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_entities_for_shipment_by_date(self, date):
+        sql = f'''
+        select ce_code
+        from forecast_entity_shipment
+        where next_date='{date}'
+        '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_plan_by_date(self, date):
+        sql = f'''
+                select point
+                from shipments
+                where date='{date}'
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def get_coords(self):
+        sql = f'''
+                select ce_code, x_coord, y_coord
+                from cash_entity
+                '''
+
+        df = pd.read_sql(sql, self.connectable)
+
+        return df
+
+    def delete_shipment(self, date, type):
+        sql = f'''
+                DELETE
+                FROM shipments
+                WHERE shipments.date='{date}'
+                AND shipments.type='{type}'
+                '''
+        try:
+            pd.read_sql_query(sql, self.connectable)
+        except (exc.ResourceClosedError, TypeError):
+            return 200
+        else:
+            return 500
+
+    def delete_forecast_balance(self, date):
+        sql = f'''
+                SELECT *
+                FROM shipments
+                WHERE shipments.date='{date}'
+                '''
+        df = pd.read_sql(sql, self.connectable)
+        if len(df) == 0:
+            sql = f'''
+                    DELETE
+                    FROM forecast_balance
+                    WHERE forecast_balance.date='{date}'
+                    '''
+            try:
+                pd.read_sql_query(sql, self.connectable)
+            except (exc.ResourceClosedError, TypeError):
+                return 200
+            else:
+                return 500
+        else:
+            return 200
+
+    def delete_forecast_entity_shipment(self, date):
+        sql = f'''
+                        SELECT *
+                        FROM shipments
+                        WHERE shipments.date='{date}'
+                        '''
+        df = pd.read_sql(sql, self.connectable)
+        if len(df) == 0:
+            sql = f'''
+                    DELETE
+                    FROM forecast_entity_shipment
+                    WHERE forecast_entity_shipment.next_date='{date}'
+                    '''
+            try:
+                pd.read_sql_query(sql, self.connectable)
+            except (exc.ResourceClosedError, TypeError):
+                return 200
+            else:
+                return 500
+        else:
+            return 200
 
 
 engine = create_engine(get_db_connection_str())
 
 db = DiplomDB(engine)
+
+# db.fill_all_balances()
